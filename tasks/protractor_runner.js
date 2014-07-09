@@ -27,6 +27,7 @@ module.exports = function(grunt) {
       configFile: protractorRefConfPath,
       keepAlive: false,
       noColor: false,
+      outputFile: undefined,
       debug: false,
       args: {}
     });
@@ -39,6 +40,7 @@ module.exports = function(grunt) {
     grunt.verbose.writeln("Options: " + util.inspect(opts));
 
     var keepAlive = opts['keepAlive'];
+    var outputFile = opts['outputFile'];
     var strArgs = ["seleniumAddress", "seleniumServerJar", "seleniumPort", "baseUrl", "rootElement", "browser", "chromeDriver", "chromeOnly", "sauceUser", "sauceKey", "framework", "suite"];
     var listArgs = ["specs", "exclude"];
     var boolArgs = ["includeStackTrace", "verbose"];
@@ -101,15 +103,26 @@ module.exports = function(grunt) {
     grunt.verbose.writeln("Spawn node with arguments: " + args.join(" "));
 
     // Spawn protractor command
+    var spawnOpts = {
+	stdio: 'inherit' 
+    };
+ 
+    if (outputFile !== undefined) {
+	spawnOpts.stdio = undefined;
+    }
+        
+
     var done = this.async();
     grunt.util.spawn({
         cmd: 'node',
         args: args,
-        opts: {
-          stdio:'inherit'
-        }
+        opts: spawnOpts
       },
       function(error, result, code) {
+	if (outputFile !== undefined) {
+            grunt.log.ok('Writing to output file ....');
+	    grunt.file.write(outputFile, result.stdout);
+        }
         if (error) {
           grunt.log.error(String(result));
           if(code === 1 && keepAlive) {
